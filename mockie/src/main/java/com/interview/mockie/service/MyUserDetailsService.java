@@ -1,5 +1,8 @@
 package com.interview.mockie.service;
 
+import com.interview.mockie.converter.UserDetailsConverter;
+import com.interview.mockie.dto.UserDetailDTO;
+import com.interview.mockie.models.Role;
 import com.interview.mockie.models.UserCredDetails;
 import com.interview.mockie.models.UserDetail;
 import com.interview.mockie.repository.UserCredentialRepository;
@@ -25,22 +28,26 @@ public class MyUserDetailsService implements UserDetailsService {
     private UserCredentialRepository userCredentialRepository;
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
-    
+    @Autowired
+    private UserDetailsConverter userDetailsConverter;
+
+
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
-        log.info("@@@@@@ loadUsersByUsername called");
         UserCredDetails ut = userCredentialRepository.getUserCredDetailsByUsername(s);
         log.info("@@@@@@ loadUsersByUsername retrieved username:{} ,pass={} ", ut.getUsername(), ut.getPassword());
         return new User(ut.getUsername(), ut.getPassword(), new ArrayDeque<>());
     }
 
-    public UserDetail register(UserDetail userDetail) {
-        log.info("@@@@ Inside the register main() --> ");
+    public UserDetailDTO register(UserDetailDTO dto, Role role) {
+        log.info("@@@@ Registering user with Role: {}", role);
+        UserDetail userDetail = userDetailsConverter.from(dto);
+        userDetail.getUserCredDetails().setRoles(role);
         userDetail.getUserCredDetails().setPassword(encodedPassword(userDetail.getUserCredDetails().getPassword()));
         try {
-            return userDetailRepository.save(userDetail);
+            return userDetailsConverter.to(userDetailRepository.save(userDetail));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error occurred while registering user: {} ", e.getMessage());
             return null;
         }
     }
@@ -48,4 +55,5 @@ public class MyUserDetailsService implements UserDetailsService {
     private String encodedPassword(String password) {
         return bCryptPasswordEncoder.encode(password);
     }
+
 }

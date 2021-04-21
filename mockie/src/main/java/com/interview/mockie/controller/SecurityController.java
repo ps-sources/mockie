@@ -1,6 +1,9 @@
 package com.interview.mockie.controller;
 
-import com.interview.mockie.models.*;
+import com.interview.mockie.dto.UserDetailDTO;
+import com.interview.mockie.models.AuthenticationRequest;
+import com.interview.mockie.models.AuthenticationResponse;
+import com.interview.mockie.models.Role;
 import com.interview.mockie.service.MyUserDetailsService;
 import com.interview.mockie.util.JWTUtility;
 import lombok.extern.slf4j.Slf4j;
@@ -9,10 +12,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Objects;
 
@@ -35,7 +41,7 @@ public class SecurityController {
      Thus, to make this endpoint authenticate we need to permit it through SpringSecurityConfig
     */
     @PostMapping("/authenticate")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception{
+    public ResponseEntity<Object> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws AuthenticationException {
         try {
             log.info("@@@@ Inside authenticate:: uname=" + authenticationRequest.getUsername() + "\tpass=" + authenticationRequest.getPassword());
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword()));
@@ -50,10 +56,8 @@ public class SecurityController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody UserDetail userDetail){
-        log.info("@@@@@ inside register-user: ");
-        userDetail.getUserCredDetails().setRoles(Role.USER);
-        UserDetail registeredUser = myUserDetailsService.register(userDetail);
+    public ResponseEntity<Object> registerUser(@RequestBody UserDetailDTO userDetailDTO){
+        UserDetailDTO registeredUser = myUserDetailsService.register(userDetailDTO, Role.USER);
         if(Objects.nonNull(registeredUser))
             return ResponseEntity.ok().body("User created successfully with username: " + registeredUser.getUserCredDetails().getUsername());
         else
@@ -61,9 +65,8 @@ public class SecurityController {
     }
 
     @PostMapping("/register-alumni")
-    public ResponseEntity<?> registerAlumni(@RequestBody  UserDetail userDetail){
-        userDetail.getUserCredDetails().setRoles(Role.ALUMNI);
-        UserDetail registeredUser = myUserDetailsService.register(userDetail);
+    public ResponseEntity<Object> registerAlumni(@RequestBody  UserDetailDTO userDetailDTO){
+        UserDetailDTO registeredUser = myUserDetailsService.register(userDetailDTO, Role.ALUMNI);
         if(Objects.nonNull(registeredUser))
             return ResponseEntity.ok().body("User created successfully with username: " + registeredUser.getUserCredDetails().getUsername());
         else

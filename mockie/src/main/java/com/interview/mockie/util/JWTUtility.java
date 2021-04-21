@@ -13,7 +13,7 @@ import java.util.function.Function;
 
 @Service
 public class JWTUtility {
-    private final String SECRET_KEY = "S3cr3aT!";
+    private static final String SECRET_KEY = "S3cr3aT!";
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
