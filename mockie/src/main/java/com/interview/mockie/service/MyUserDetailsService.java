@@ -9,6 +9,8 @@ import com.interview.mockie.repository.UserCredentialRepository;
 import com.interview.mockie.repository.UserDetailRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,6 +19,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -35,8 +39,10 @@ public class MyUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
         UserCredDetails ut = userCredentialRepository.getUserCredDetailsByUsername(s);
-        log.info("@@@@@@ loadUsersByUsername retrieved username:{} ,pass={} ", ut.getUsername(), ut.getPassword());
-        return new User(ut.getUsername(), ut.getPassword(), new ArrayDeque<>());
+        log.info("@@@@@@ loadUsersByUsername retrieved username:{} ", ut.getUsername());
+        List<GrantedAuthority> authorities = AuthorityUtils.createAuthorityList(ut.getRoles().toString());
+        log.info("@@@@@@ Authorities: {} ", authorities.get(0));
+        return new User(ut.getUsername(), ut.getPassword(), authorities);
     }
 
     public UserDetailDTO register(UserDetailDTO dto, Role role) {

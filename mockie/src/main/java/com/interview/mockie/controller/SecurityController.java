@@ -41,18 +41,20 @@ public class SecurityController {
      Thus, to make this endpoint authenticate we need to permit it through SpringSecurityConfig
     */
     @PostMapping("/authenticate")
-    public ResponseEntity<Object> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws AuthenticationException {
+    public String createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws AuthenticationException {
         try {
-            log.info("@@@@ Inside authenticate:: uname=" + authenticationRequest.getUsername() + "\tpass=" + authenticationRequest.getPassword());
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword()));
         } catch (BadCredentialsException ex) {
             ex.printStackTrace();
-            return ResponseEntity.badRequest().body("Incorrect username or password!");
+            return ResponseEntity.badRequest().body("Incorrect username or password!").toString();
         }
         final UserDetails userDetails = myUserDetailsService.loadUserByUsername(authenticationRequest.getUsername());
         final String jwt = jwtUtils.generateToken(userDetails);
-
-        return ResponseEntity.ok(new AuthenticationResponse(jwt));   //return 200 OK
+        final String role = jwtUtils.extractRole(jwt);
+        if ("USER".equals(role)) return "redirect:/user/dashboard";
+        else if ("ALUMNI".equals(role)) return "redirect:/alumni/dashboard";
+        else if ("ADMIN".equals(role)) return "redirect:/admin/dashboard";
+        else return ResponseEntity.badRequest().body("You are not authorized !").toString();
     }
 
     @PostMapping("/register")
